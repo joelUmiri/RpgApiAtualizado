@@ -8,11 +8,12 @@ using RpgApi.Data;
 using RpgApi.Models;
 using RpgApi.Utils;
 using System.Security.Claims;
-using Microsoft.IdentityModel.Tokens; 
-using System.Text; 
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using System;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions;
 
 namespace RpgApi.Controllers
 {
@@ -43,8 +44,9 @@ namespace RpgApi.Controllers
         {
             List<Claim> claims = new List<Claim>
             {
-            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
-            new Claim(ClaimTypes.Name, usuario.Username)
+                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
+                new Claim(ClaimTypes.Name, usuario.Username),
+                new Claim(ClaimTypes.Role, usuario.Username)
             };
             SymmetricSecurityKey key = new SymmetricSecurityKey(Encoding.UTF8
             .GetBytes(_configuration.GetSection("ConfiguracaoToken:Chave").Value));
@@ -106,9 +108,10 @@ namespace RpgApi.Controllers
                 }
                 else
                 {
-                     usuario.DataAcesso = DateTime.Now;
+                    usuario.DataAcesso = DateTime.Now;
                     _context.TB_USUARIOS.Update(usuario);
                     await _context.SaveChangesAsync();//confirma a alteração no banco
+
                     usuario.PasswordHash = null; //Retira o hash e o salt do usuário
                     usuario.PasswordSalt = null;
                     usuario.Token = CriarToken(usuario); //Cria o token para o usuário
@@ -229,11 +232,11 @@ namespace RpgApi.Controllers
                 Usuario usuario = await _context.TB_USUARIOS //Busca o usuário no banco através do Id
                    .FirstOrDefaultAsync(x => x.Id == u.Id);
 
-                usuario.Email = u.Email;                
+                usuario.Email = u.Email;
 
                 var attach = _context.Attach(usuario);
                 attach.Property(x => x.Id).IsModified = false;
-                attach.Property(x => x.Email).IsModified = true;                
+                attach.Property(x => x.Email).IsModified = true;
 
                 int linhasAfetadas = await _context.SaveChangesAsync(); //Confirma a alteração no banco
                 return Ok(linhasAfetadas); //Retorna as linhas afetadas (Geralmente sempre 1 linha msm)
@@ -250,17 +253,17 @@ namespace RpgApi.Controllers
         {
             try
             {
-                Usuario usuario = await _context.TB_USUARIOS 
+                Usuario usuario = await _context.TB_USUARIOS
                    .FirstOrDefaultAsync(x => x.Id == u.Id);
 
-                usuario.Foto = u.Foto;                
+                usuario.Foto = u.Foto;
 
                 var attach = _context.Attach(usuario);
                 attach.Property(x => x.Id).IsModified = false;
-                attach.Property(x => x.Foto).IsModified = true;                
+                attach.Property(x => x.Foto).IsModified = true;
 
-                int linhasAfetadas = await _context.SaveChangesAsync(); 
-                return Ok(linhasAfetadas); 
+                int linhasAfetadas = await _context.SaveChangesAsync();
+                return Ok(linhasAfetadas);
             }
             catch (System.Exception ex)
             {
@@ -273,7 +276,7 @@ namespace RpgApi.Controllers
 
 
 
-        
+
 
 
     }
